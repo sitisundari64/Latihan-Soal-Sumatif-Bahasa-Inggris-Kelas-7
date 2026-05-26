@@ -1,0 +1,475 @@
+<!doctype html>
+<html lang="id" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>English Summative Test - Grade 7</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="/_sdk/data_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .question-card { transition: all 0.3s ease; }
+    .question-card:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
+    .option-btn { transition: all 0.2s ease; }
+    .option-btn:hover { transform: scale(1.01); }
+    .option-btn.selected { border-color: #2563eb; background: #eff6ff; }
+    .option-btn.correct { border-color: #16a34a; background: #f0fdf4; }
+    .option-btn.incorrect { border-color: #dc2626; background: #fef2f2; }
+    .match-item { cursor: grab; transition: all 0.2s; }
+    .match-item:hover { background: #eff6ff; }
+    .match-item.matched { background: #f0fdf4; border-color: #16a34a; }
+    .progress-bar { transition: width 0.5s ease; }
+    .fade-in { animation: fadeIn 0.4s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .stimulus-box { background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-left: 4px solid #0284c7; }
+    .toast { animation: slideIn 0.3s ease, slideOut 0.3s ease 2.7s; }
+    @keyframes slideIn { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    @keyframes slideOut { from { opacity: 1; } to { opacity: 0; } }
+  </style>
+  <style>body { box-sizing: border-box; }</style>
+ </head>
+ <body class="h-full">
+  <div id="app" class="h-full w-full overflow-auto bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50"><!-- Toast -->
+   <div id="toast" class="fixed top-4 right-4 z-50 hidden"></div><!-- Login Screen -->
+   <div id="login-screen" class="min-h-full flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md fade-in">
+     <div class="text-center mb-8">
+      <div class="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4"><i data-lucide="book-open" class="text-white" style="width:32px;height:32px"></i>
+      </div>
+      <h1 id="login-title" class="text-2xl font-800 text-slate-800">Latihan Sumatif Bahasa Inggris</h1>
+      <p id="login-school" class="text-slate-500 mt-1">SMP Kelas 7</p>
+     </div>
+     <form id="login-form" class="space-y-4">
+      <div><label for="student-name" class="block text-sm font-600 text-slate-700 mb-1">Nama Lengkap</label> <input type="text" id="student-name" required class="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-blue-500 focus:outline-none transition" placeholder="Masukkan nama lengkap">
+      </div>
+      <div><label for="student-class" class="block text-sm font-600 text-slate-700 mb-1">Kelas</label> <input type="text" id="student-class" required class="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-blue-500 focus:outline-none transition" placeholder="Contoh: 7A">
+      </div><button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-700 rounded-xl transition mt-4"> Mulai Mengerjakan </button>
+     </form>
+    </div>
+   </div><!-- Test Screen -->
+   <div id="test-screen" class="hidden min-h-full p-4 md:p-6">
+    <div class="max-w-4xl mx-auto"><!-- Header -->
+     <div class="bg-white rounded-2xl shadow-md p-4 mb-6 flex flex-wrap items-center justify-between gap-3">
+      <div>
+       <h2 id="test-header-title" class="font-700 text-lg text-slate-800">Latihan Sumatif Bahasa Inggris</h2>
+       <p id="student-info" class="text-sm text-slate-500"></p>
+      </div>
+      <div class="flex items-center gap-3"><span id="progress-text" class="text-sm font-600 text-blue-600"></span> <button id="submit-test-btn" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-600 rounded-xl text-sm transition hidden">Kumpulkan</button>
+      </div>
+     </div><!-- Progress Bar -->
+     <div class="w-full bg-slate-200 rounded-full h-2 mb-6">
+      <div id="progress-bar" class="progress-bar bg-blue-600 h-2 rounded-full" style="width:0%"></div>
+     </div><!-- Questions Container -->
+     <div id="questions-container" class="space-y-6"></div><!-- Submit Button Bottom -->
+     <div class="text-center mt-8 mb-12"><button id="submit-test-btn-bottom" class="px-8 py-3 bg-green-600 hover:bg-green-700 text-white font-700 rounded-xl transition text-lg shadow-lg hidden"> <i data-lucide="send" style="width:20px;height:20px;display:inline-block;vertical-align:middle;margin-right:8px"></i> Kumpulkan Jawaban </button>
+     </div>
+    </div>
+   </div><!-- Result Screen -->
+   <div id="result-screen" class="hidden min-h-full flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-lg text-center fade-in">
+     <div id="result-icon" class="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4"></div>
+     <h2 class="text-2xl font-800 text-slate-800 mb-2">Hasil Ujian</h2>
+     <p id="result-name" class="text-slate-500 mb-6"></p>
+     <div class="bg-slate-50 rounded-xl p-6 mb-6">
+      <p class="text-5xl font-800 text-blue-600" id="result-score"></p>
+      <p class="text-slate-500 mt-2" id="result-detail"></p>
+     </div><button id="review-btn" class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-600 rounded-xl transition">Lihat Pembahasan</button>
+    </div>
+   </div><!-- Confirm Modal -->
+   <div id="confirm-modal" class="hidden fixed inset-0 bg-black/50 z-40 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-sm">
+     <h3 class="text-lg font-700 text-slate-800 mb-2">Kumpulkan Jawaban?</h3>
+     <p class="text-slate-500 text-sm mb-4" id="confirm-text"></p>
+     <div class="flex gap-3"><button id="confirm-cancel" class="flex-1 py-2 border-2 border-slate-200 rounded-xl font-600 text-slate-600 hover:bg-slate-50 transition">Batal</button> <button id="confirm-submit" class="flex-1 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl font-600 transition">Kumpulkan</button>
+     </div>
+    </div>
+   </div>
+  </div>
+  <script>
+// ===== CONFIG =====
+const defaultConfig = {
+  test_title: 'Latihan Sumatif Bahasa Inggris',
+  school_name: 'SMP Kelas 7',
+  background_color: '#f8fafc',
+  surface_color: '#ffffff',
+  text_color: '#1e293b',
+  primary_color: '#2563eb',
+  secondary_color: '#16a34a'
+};
+
+// ===== QUESTIONS DATA =====
+const questions = [];
+
+// Section A: 20 Multiple Choice
+const mcQuestions = [
+  { stimulus: "Read the dialogue:<br><em>Anna: \"Good morning, Mr. Budi!\"<br>Mr. Budi: \"Good morning, Anna. How are you?\"<br>Anna: \"___________\"</em>", q: "What is the best response for Anna?", options: ["I am fine, thank you.", "Good night.", "See you later.", "You're welcome."], answer: 0 },
+  { stimulus: "Look at this sentence:<br><em>\"My name is Rina. I am twelve years old. I live in Jakarta.\"</em>", q: "What is Rina doing in the text above?", options: ["Asking for help", "Introducing herself", "Giving directions", "Ordering food"], answer: 1 },
+  { stimulus: "Read:<br><em>\"There are twenty students in my class. Ten boys and ten girls.\"</em>", q: "How many students are there in total?", options: ["10", "15", "20", "30"], answer: 2 },
+  { stimulus: "🕐 Look at the clock. It shows 7:00 AM.", q: "Which greeting is appropriate at this time?", options: ["Good evening", "Good afternoon", "Good morning", "Good night"], answer: 2 },
+  { stimulus: "Read:<br><em>\"She always wakes up at 5 o'clock. She takes a bath and has breakfast before going to school.\"</em>", q: "What does 'she' do after waking up?", options: ["Goes to school immediately", "Takes a bath and has breakfast", "Watches TV", "Plays games"], answer: 1 },
+  { stimulus: "📚 Vocabulary context:<br><em>\"The students are studying in the _____.\"</em>", q: "Complete the sentence with the correct word.", options: ["kitchen", "library", "bathroom", "garage"], answer: 1 },
+  { stimulus: "Read the notice:<br><em>\"KEEP SILENT! Exam in progress.\"</em>", q: "Where would you find this notice?", options: ["In a market", "In a school", "In a park", "In a restaurant"], answer: 1 },
+  { stimulus: "Look at this schedule:<br><em>Monday: Math, English, Science<br>Tuesday: Indonesian, Art, PE</em>", q: "When do students have English class?", options: ["Tuesday", "Monday", "Wednesday", "Friday"], answer: 1 },
+  { stimulus: "Read:<br><em>\"Can I borrow your pencil, please?\"<br>\"Sure, here you are.\"</em>", q: "The dialogue shows someone is...", options: ["Giving an opinion", "Making a request", "Giving instructions", "Making an introduction"], answer: 1 },
+  { stimulus: "📝 Fill in:<br><em>\"I ___ a student of SMP Nusantara.\"</em>", q: "Choose the correct verb.", options: ["is", "are", "am", "be"], answer: 2 },
+  { stimulus: "Read:<br><em>\"My father is a doctor. He works at the hospital every day.\"</em>", q: "Where does the father work?", options: ["School", "Office", "Hospital", "Market"], answer: 2 },
+  { stimulus: "🏫 Look at this description:<br><em>\"It is a big building. There are many classrooms, a library, and a canteen.\"</em>", q: "What place is being described?", options: ["A house", "A school", "A hospital", "A mall"], answer: 1 },
+  { stimulus: "Read:<br><em>\"They are playing football in the field.\"</em>", q: "What tense is used in this sentence?", options: ["Simple present", "Present continuous", "Simple past", "Future tense"], answer: 1 },
+  { stimulus: "Complete:<br><em>\"She ___ to school every day by bus.\"</em>", q: "Choose the correct answer.", options: ["go", "goes", "going", "gone"], answer: 1 },
+  { stimulus: "Read the invitation:<br><em>\"Please come to my birthday party on Saturday at 4 PM. — Dina\"</em>", q: "What is the purpose of this text?", options: ["To inform about homework", "To invite someone to a party", "To sell something", "To give directions"], answer: 1 },
+  { stimulus: "🌤️ Weather context:<br><em>\"It is sunny today. The sky is blue and clear.\"</em>", q: "How is the weather?", options: ["Rainy", "Cloudy", "Sunny", "Stormy"], answer: 2 },
+  { stimulus: "Read:<br><em>\"Andi has a cat. Its name is Milo. It is white and fluffy.\"</em>", q: "What color is Milo?", options: ["Black", "Brown", "White", "Orange"], answer: 2 },
+  { stimulus: "Complete:<br><em>\"We ___ not like spicy food.\"</em>", q: "Choose the correct word.", options: ["do", "does", "is", "are"], answer: 0 },
+  { stimulus: "Read:<br><em>\"Excuse me, where is the library?\"<br>\"Go straight and turn left.\"</em>", q: "What is the person asking for?", options: ["Time", "Direction", "Permission", "Help with homework"], answer: 1 },
+  { stimulus: "📖 Read:<br><em>\"Once upon a time, there was a rabbit and a turtle. They had a race.\"</em>", q: "What type of text is this?", options: ["Descriptive", "Narrative", "Procedure", "Report"], answer: 1 }
+];
+mcQuestions.forEach((item, i) => {
+  questions.push({ id: i+1, type: 'mc', section: 'A', ...item });
+});
+
+// Section B: 5 Complex MC (multiple correct)
+const complexMC = [
+  { stimulus: "Read:<br><em>\"In the morning, students do many activities. They study, read books, do exercises, and play with friends.\"</em>", q: "Which activities are mentioned? (Choose more than one)", options: ["Study", "Cook", "Read books", "Sleep", "Do exercises"], answers: [0, 2, 4] },
+  { stimulus: "🏠 Read:<br><em>\"A house has a living room, bedrooms, kitchen, and bathroom.\"</em>", q: "Which rooms are parts of a house? (Choose more than one)", options: ["Classroom", "Living room", "Kitchen", "Bedroom", "Laboratory"], answers: [1, 2, 3] },
+  { stimulus: "Read:<br><em>\"To make fried rice, you need rice, oil, garlic, egg, and soy sauce.\"</em>", q: "Select the ingredients for fried rice. (Choose more than one)", options: ["Rice", "Butter", "Garlic", "Egg", "Cheese"], answers: [0, 2, 3] },
+  { stimulus: "📅 Days context:<br><em>\"School days are from Monday to Friday.\"</em>", q: "Which are school days? (Choose more than one)", options: ["Sunday", "Monday", "Wednesday", "Saturday", "Friday"], answers: [1, 2, 4] },
+  { stimulus: "Read:<br><em>\"Greeting someone: Good morning, Good afternoon, Good evening.\"</em>", q: "Which are correct greetings in English? (Choose more than one)", options: ["Good morning", "Good sleep", "Good afternoon", "Good evening", "Good food"], answers: [0, 2, 3] }
+];
+complexMC.forEach((item, i) => {
+  questions.push({ id: 21+i, type: 'complex', section: 'B', ...item });
+});
+
+// Section C: 5 True/False
+const tfQuestions = [
+  { stimulus: "Statement:<br><em>\"The sun rises in the east.\"</em>", q: "Is this statement TRUE or FALSE?", answer: true },
+  { stimulus: "Statement:<br><em>\"In English, 'cat' means 'anjing'.\"</em>", q: "Is this statement TRUE or FALSE?", answer: false },
+  { stimulus: "Statement:<br><em>\"There are seven days in a week.\"</em>", q: "Is this statement TRUE or FALSE?", answer: true },
+  { stimulus: "Statement:<br><em>\"'She go to school every day' is grammatically correct.\"</em>", q: "Is this statement TRUE or FALSE?", answer: false },
+  { stimulus: "Statement:<br><em>\"A noun is a word that describes an action.\"</em>", q: "Is this statement TRUE or FALSE?", answer: false }
+];
+tfQuestions.forEach((item, i) => {
+  questions.push({ id: 26+i, type: 'tf', section: 'C', ...item });
+});
+
+// Section D: 5 Matching
+const matchQuestions = [
+  { stimulus: "Match the English words with their Indonesian meanings.", pairs: [["Apple","Apel"],["Book","Buku"],["Chair","Kursi"],["Door","Pintu"],["Eye","Mata"]] },
+  { stimulus: "Match the subject with the correct 'to be'.", pairs: [["I","am"],["She","is"],["They","are"],["He","is"],["We","are"]] },
+  { stimulus: "Match the question with the correct response.", pairs: [["How are you?","I am fine"],["What is your name?","My name is Rani"],["Where do you live?","I live in Bandung"],["How old are you?","I am 12 years old"],["What time is it?","It is 7 o'clock"]] },
+  { stimulus: "Match the profession with the workplace.", pairs: [["Teacher","School"],["Doctor","Hospital"],["Chef","Restaurant"],["Pilot","Airport"],["Farmer","Field"]] },
+  { stimulus: "Match the animal with its description.", pairs: [["Cat","Has fur and whiskers"],["Fish","Lives in water"],["Bird","Can fly"],["Snake","Has no legs"],["Dog","Is loyal to humans"]] }
+];
+matchQuestions.forEach((item, i) => {
+  questions.push({ id: 31+i, type: 'match', section: 'D', ...item });
+});
+
+// Section E: 5 Short Answer
+const shortQuestions = [
+  { stimulus: "Read:<br><em>\"My mother cooks in the kitchen every morning.\"</em>", q: "Where does mother cook?", answer: "kitchen" },
+  { stimulus: "Translate to English:<br><em>\"Saya suka membaca buku.\"</em>", q: "Write the English translation:", answer: "i like reading books" },
+  { stimulus: "Read:<br><em>\"There are 12 months in a year. The first month is...\"</em>", q: "What is the first month of the year?", answer: "january" },
+  { stimulus: "Complete:<br><em>\"She is my mother's mother. She is my _____\"</em>", q: "Write the family relationship:", answer: "grandmother" },
+  { stimulus: "🔢 Spell this number in English: <strong>15</strong>", q: "Write the number in words:", answer: "fifteen" }
+];
+shortQuestions.forEach((item, i) => {
+  questions.push({ id: 36+i, type: 'short', section: 'E', ...item });
+});
+
+// ===== STATE =====
+let studentName = '';
+let studentClass = '';
+let userAnswers = {};
+let allRecords = [];
+let isSubmitting = false;
+
+// ===== RENDER FUNCTIONS =====
+function showToast(msg, type='success') {
+  const toast = document.getElementById('toast');
+  toast.innerHTML = `<div class="toast px-4 py-3 rounded-xl shadow-lg ${type==='success'?'bg-green-600':'bg-red-600'} text-white font-600 text-sm">${msg}</div>`;
+  toast.classList.remove('hidden');
+  setTimeout(() => toast.classList.add('hidden'), 3000);
+}
+
+function updateProgress() {
+  const answered = Object.keys(userAnswers).length;
+  const total = questions.length;
+  const pct = Math.round((answered/total)*100);
+  document.getElementById('progress-bar').style.width = pct+'%';
+  document.getElementById('progress-text').textContent = `${answered}/${total} dijawab`;
+  const showSubmit = answered > 0;
+  document.getElementById('submit-test-btn').classList.toggle('hidden', !showSubmit);
+  document.getElementById('submit-test-btn-bottom').classList.toggle('hidden', !showSubmit);
+}
+
+function renderQuestions() {
+  const container = document.getElementById('questions-container');
+  container.innerHTML = '';
+  
+  const sections = [
+    { key: 'A', title: 'Bagian A: Pilihan Ganda (20 soal)', ids: questions.filter(q=>q.section==='A') },
+    { key: 'B', title: 'Bagian B: Pilihan Ganda Kompleks (5 soal)', ids: questions.filter(q=>q.section==='B') },
+    { key: 'C', title: 'Bagian C: Benar / Salah (5 soal)', ids: questions.filter(q=>q.section==='C') },
+    { key: 'D', title: 'Bagian D: Menjodohkan (5 soal)', ids: questions.filter(q=>q.section==='D') },
+    { key: 'E', title: 'Bagian E: Isian Singkat (5 soal)', ids: questions.filter(q=>q.section==='E') }
+  ];
+
+  sections.forEach(sec => {
+    const secDiv = document.createElement('div');
+    secDiv.innerHTML = `<h3 class="text-lg font-700 text-slate-800 mb-4 mt-2 px-1">${sec.title}</h3>`;
+    sec.ids.forEach(q => {
+      secDiv.appendChild(renderQuestion(q));
+    });
+    container.appendChild(secDiv);
+  });
+  
+  lucide.createIcons();
+  updateProgress();
+}
+
+function renderQuestion(q) {
+  const card = document.createElement('div');
+  card.className = 'question-card bg-white rounded-xl shadow-sm p-5 mb-4 border border-slate-100 fade-in';
+  card.id = 'q-'+q.id;
+  
+  let html = `<div class="flex items-start gap-3 mb-3">
+    <span class="flex-shrink-0 w-8 h-8 bg-blue-100 text-blue-700 rounded-lg flex items-center justify-center font-700 text-sm">${q.id}</span>
+    <div class="flex-1">`;
+  
+  if(q.stimulus) html += `<div class="stimulus-box rounded-lg p-3 mb-3 text-sm text-slate-700">${q.stimulus}</div>`;
+  
+  if(q.type === 'mc') {
+    html += `<p class="font-600 text-slate-800 mb-3">${q.q}</p><div class="space-y-2">`;
+    const labels = ['A','B','C','D'];
+    q.options.forEach((opt, i) => {
+      const selected = userAnswers[q.id] === i;
+      html += `<button onclick="selectMC(${q.id},${i})" class="option-btn w-full text-left px-4 py-2.5 rounded-lg border-2 ${selected?'border-blue-500 bg-blue-50':'border-slate-200'} text-sm flex items-center gap-2">
+        <span class="w-6 h-6 rounded-full ${selected?'bg-blue-600 text-white':'bg-slate-100 text-slate-600'} flex items-center justify-center text-xs font-700">${labels[i]}</span>
+        <span>${opt}</span></button>`;
+    });
+    html += '</div>';
+  } else if(q.type === 'complex') {
+    html += `<p class="font-600 text-slate-800 mb-3">${q.q}</p><div class="space-y-2">`;
+    const selected = userAnswers[q.id] || [];
+    q.options.forEach((opt, i) => {
+      const checked = selected.includes(i);
+      html += `<button onclick="selectComplex(${q.id},${i})" class="option-btn w-full text-left px-4 py-2.5 rounded-lg border-2 ${checked?'border-blue-500 bg-blue-50':'border-slate-200'} text-sm flex items-center gap-2">
+        <span class="w-5 h-5 rounded ${checked?'bg-blue-600':'border border-slate-300'} flex items-center justify-center">${checked?'<i data-lucide="check" style="width:14px;height:14px;color:white"></i>':''}</span>
+        <span>${opt}</span></button>`;
+    });
+    html += '</div>';
+  } else if(q.type === 'tf') {
+    html += `<p class="font-600 text-slate-800 mb-3">${q.q}</p><div class="flex gap-3">`;
+    [true, false].forEach(val => {
+      const selected = userAnswers[q.id] === val;
+      html += `<button onclick="selectTF(${q.id},${val})" class="option-btn flex-1 px-4 py-3 rounded-lg border-2 ${selected?'border-blue-500 bg-blue-50':'border-slate-200'} font-600 text-sm">${val?'TRUE':'FALSE'}</button>`;
+    });
+    html += '</div>';
+  } else if(q.type === 'match') {
+    html += `<p class="font-600 text-slate-800 mb-3">Jodohkan kolom kiri dengan kolom kanan.</p>`;
+    const ans = userAnswers[q.id] || {};
+    const shuffledRight = [...q.pairs.map(p=>p[1])].sort(()=>Math.random()-0.5);
+    // Store shuffled order once
+    if(!q._shuffled) { q._shuffled = shuffledRight; }
+    html += `<div class="grid grid-cols-2 gap-2 text-sm">
+      <div class="font-600 text-slate-500 text-xs uppercase mb-1">Kolom A</div>
+      <div class="font-600 text-slate-500 text-xs uppercase mb-1">Kolom B</div>`;
+    q.pairs.forEach((pair, i) => {
+      html += `<div class="px-3 py-2 bg-slate-50 rounded-lg border font-500">${i+1}. ${pair[0]}</div>`;
+      html += `<select onchange="selectMatch(${q.id},${i},this.value)" class="px-3 py-2 rounded-lg border-2 border-slate-200 bg-white focus:border-blue-500 focus:outline-none">
+        <option value="">-- Pilih --</option>`;
+      q._shuffled.forEach(r => {
+        html += `<option value="${r}" ${ans[i]===r?'selected':''}>${r}</option>`;
+      });
+      html += `</select>`;
+    });
+    html += '</div>';
+  } else if(q.type === 'short') {
+    html += `<p class="font-600 text-slate-800 mb-3">${q.q}</p>
+      <input type="text" oninput="selectShort(${q.id},this.value)" value="${userAnswers[q.id]||''}" class="w-full px-4 py-2.5 rounded-lg border-2 border-slate-200 focus:border-blue-500 focus:outline-none text-sm" placeholder="Ketik jawaban di sini...">`;
+  }
+  
+  html += '</div></div>';
+  card.innerHTML = html;
+  return card;
+}
+
+// ===== ANSWER HANDLERS =====
+function selectMC(id, idx) { userAnswers[id] = idx; reRenderQ(id); updateProgress(); }
+function selectComplex(id, idx) {
+  if(!userAnswers[id]) userAnswers[id] = [];
+  const arr = userAnswers[id];
+  const i = arr.indexOf(idx);
+  if(i>=0) arr.splice(i,1); else arr.push(idx);
+  userAnswers[id] = [...arr];
+  reRenderQ(id);
+  updateProgress();
+}
+function selectTF(id, val) { userAnswers[id] = val; reRenderQ(id); updateProgress(); }
+function selectMatch(id, idx, val) {
+  if(!userAnswers[id]) userAnswers[id] = {};
+  userAnswers[id][idx] = val;
+  userAnswers[id] = {...userAnswers[id]};
+  updateProgress();
+}
+function selectShort(id, val) { userAnswers[id] = val; updateProgress(); }
+
+function reRenderQ(id) {
+  const q = questions.find(x=>x.id===id);
+  const old = document.getElementById('q-'+id);
+  if(old && q) { old.replaceWith(renderQuestion(q)); lucide.createIcons(); }
+}
+
+// ===== SCORING =====
+function calculateScore() {
+  let correct = 0;
+  const total = questions.length;
+  questions.forEach(q => {
+    const ans = userAnswers[q.id];
+    if(q.type === 'mc') { if(ans === q.answer) correct++; }
+    else if(q.type === 'complex') {
+      if(ans && JSON.stringify([...ans].sort()) === JSON.stringify([...q.answers].sort())) correct++;
+    }
+    else if(q.type === 'tf') { if(ans === q.answer) correct++; }
+    else if(q.type === 'match') {
+      if(ans) {
+        let allRight = true;
+        q.pairs.forEach((p,i) => { if(ans[i] !== p[1]) allRight = false; });
+        if(allRight) correct++;
+      }
+    }
+    else if(q.type === 'short') {
+      if(ans && ans.trim().toLowerCase() === q.answer.toLowerCase()) correct++;
+    }
+  });
+  return { correct, total, score: Math.round((correct/total)*100) };
+}
+
+// ===== SUBMIT =====
+async function submitTest() {
+  if(isSubmitting) return;
+  isSubmitting = true;
+  document.getElementById('confirm-modal').classList.add('hidden');
+  
+  const { correct, total, score } = calculateScore();
+  
+  const result = await window.dataSdk.create({
+    student_name: studentName,
+    student_class: studentClass,
+    answers_json: JSON.stringify(userAnswers),
+    score: score,
+    total_correct: correct,
+    submitted_at: new Date().toISOString()
+  });
+  
+  isSubmitting = false;
+  
+  if(result.isOk) {
+    showResult(correct, total, score);
+  } else {
+    showToast('Gagal menyimpan. Coba lagi.', 'error');
+  }
+}
+
+function showResult(correct, total, score) {
+  document.getElementById('test-screen').classList.add('hidden');
+  document.getElementById('result-screen').classList.remove('hidden');
+  
+  const icon = document.getElementById('result-icon');
+  if(score >= 75) {
+    icon.className = 'w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 bg-green-100';
+    icon.innerHTML = '<i data-lucide="trophy" style="width:40px;height:40px;color:#16a34a"></i>';
+  } else {
+    icon.className = 'w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 bg-orange-100';
+    icon.innerHTML = '<i data-lucide="target" style="width:40px;height:40px;color:#ea580c"></i>';
+  }
+  document.getElementById('result-name').textContent = `${studentName} — Kelas ${studentClass}`;
+  document.getElementById('result-score').textContent = score + ' / 100';
+  document.getElementById('result-detail').textContent = `Benar: ${correct} dari ${total} soal`;
+  lucide.createIcons();
+}
+
+// ===== EVENTS =====
+document.getElementById('login-form').addEventListener('submit', function(e) {
+  e.preventDefault();
+  studentName = document.getElementById('student-name').value.trim();
+  studentClass = document.getElementById('student-class').value.trim();
+  if(!studentName || !studentClass) return;
+  
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('test-screen').classList.remove('hidden');
+  document.getElementById('student-info').textContent = `${studentName} • Kelas ${studentClass}`;
+  renderQuestions();
+});
+
+document.getElementById('submit-test-btn').addEventListener('click', showConfirm);
+document.getElementById('submit-test-btn-bottom').addEventListener('click', showConfirm);
+document.getElementById('confirm-cancel').addEventListener('click', () => document.getElementById('confirm-modal').classList.add('hidden'));
+document.getElementById('confirm-submit').addEventListener('click', submitTest);
+document.getElementById('review-btn').addEventListener('click', () => {
+  document.getElementById('result-screen').classList.add('hidden');
+  document.getElementById('test-screen').classList.remove('hidden');
+  // Show answers - simplified review
+  showToast('Lihat jawaban yang benar di tiap soal');
+});
+
+function showConfirm() {
+  const answered = Object.keys(userAnswers).length;
+  document.getElementById('confirm-text').textContent = `Anda telah menjawab ${answered} dari ${questions.length} soal. Yakin ingin mengumpulkan?`;
+  document.getElementById('confirm-modal').classList.remove('hidden');
+}
+
+// ===== SDK INIT =====
+const dataHandler = {
+  onDataChanged(data) {
+    allRecords = data;
+  }
+};
+
+(async () => {
+  await window.dataSdk.init(dataHandler);
+})();
+
+window.elementSdk.init({
+  defaultConfig,
+  onConfigChange: async (config) => {
+    const title = config.test_title || defaultConfig.test_title;
+    const school = config.school_name || defaultConfig.school_name;
+    document.getElementById('login-title').textContent = title;
+    document.getElementById('login-school').textContent = school;
+    document.getElementById('test-header-title').textContent = title;
+    
+    const bg = config.background_color || defaultConfig.background_color;
+    const primary = config.primary_color || defaultConfig.primary_color;
+    document.getElementById('app').style.background = `linear-gradient(135deg, ${bg}, ${bg}ee, ${primary}11)`;
+  },
+  mapToCapabilities: (config) => ({
+    recolorables: [
+      { get: () => config.background_color || defaultConfig.background_color, set: (v) => { config.background_color = v; window.elementSdk.setConfig({ background_color: v }); }},
+      { get: () => config.surface_color || defaultConfig.surface_color, set: (v) => { config.surface_color = v; window.elementSdk.setConfig({ surface_color: v }); }},
+      { get: () => config.text_color || defaultConfig.text_color, set: (v) => { config.text_color = v; window.elementSdk.setConfig({ text_color: v }); }},
+      { get: () => config.primary_color || defaultConfig.primary_color, set: (v) => { config.primary_color = v; window.elementSdk.setConfig({ primary_color: v }); }},
+      { get: () => config.secondary_color || defaultConfig.secondary_color, set: (v) => { config.secondary_color = v; window.elementSdk.setConfig({ secondary_color: v }); }}
+    ],
+    borderables: [],
+    fontEditable: {
+      get: () => config.font_family || defaultConfig.font_family || 'Plus Jakarta Sans',
+      set: (v) => { config.font_family = v; window.elementSdk.setConfig({ font_family: v }); }
+    },
+    fontSizeable: {
+      get: () => config.font_size || defaultConfig.font_size || 16,
+      set: (v) => { config.font_size = v; window.elementSdk.setConfig({ font_size: v }); }
+    }
+  }),
+  mapToEditPanelValues: (config) => new Map([
+    ["test_title", config.test_title || defaultConfig.test_title],
+    ["school_name", config.school_name || defaultConfig.school_name]
+  ])
+});
+
+lucide.createIcons();
+</script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a01fc4d028a53fc5',t:'MTc3OTgyOTg0OQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
